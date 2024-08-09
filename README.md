@@ -7,8 +7,8 @@ This is a FastAPI-based backend for the ClinicConnect application. It provides a
 1. Clone the Repository:
 
 ```
-git clone https://github.com/yourusername/clinicconnect-api.git
-cd clinicconnect-api
+git clone https://github.com/tomehabb/clincconnect.git
+cd clinicconnect
 ```
 
 
