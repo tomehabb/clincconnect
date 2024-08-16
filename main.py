@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, users, admin
+from routers import auth, users, admin, clinics
 from database import engine, Base
 
 # Create an instance of FastAPI
@@ -16,3 +16,6 @@ app.include_router(users.router)
 
 #Include the admin's router
 app.include_router(admin.router)
+
+#Include the clinic's router
+app.include_router(clinics.router)
