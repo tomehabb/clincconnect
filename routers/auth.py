@@ -92,9 +92,20 @@ class Token(BaseModel):
 # Route to create a new user
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+    # Check if user exists inside the database
+
+    user_exists = db.query(Users).filter(
+    (Users.email == create_user_request.email) | 
+    (Users.mobile_number == create_user_request.mobile_number)).first()
+
+    if user_exists:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email address or mobile number is already registered")
+
+
     # Create a new user model with hashed password
     create_user_model = Users(
         email=create_user_request.email,
+        mobile_number = create_user_request.mobile_number,
         full_name=create_user_request.full_name,
         hashed_password=bcrypt_context.hash(create_user_request.password),
         role=create_user_request.role,

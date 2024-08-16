@@ -130,6 +130,7 @@ ENV/
 env.bak/
 venv.bak/
 clinc_venv/
+clinic_venv/
 
 # Spyder project settings
 .spyderproject
