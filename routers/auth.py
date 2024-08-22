@@ -1,6 +1,7 @@
+import base64
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal
@@ -66,10 +67,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 # Pydantic model for user creation request
 class CreateUserRequest(BaseModel):
     full_name: str
-    password: str
     email: str
+    password: str
     mobile_number: str
-    role: str
+    date_of_birth: str
+    doctor_speciality: str
 
     # Example schema for the user creation request
     model_config = {
@@ -79,36 +81,70 @@ class CreateUserRequest(BaseModel):
                 "password": "xyz1234",
                 "email": "example@example.com",
                 "mobile_number": "01012345678",
-                "role": "user",
+                "date_of_birth": "10-05-2023",
+                "doctor_speciality": "dermatology"
             }
         }
     }
+
+def create_user_form(
+    full_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    mobile_number: str = Form(...),
+    date_of_birth: str = Form(...),
+    doctor_speciality: str = Form(...)
+) -> CreateUserRequest:
+    return CreateUserRequest(
+        full_name=full_name,
+        email=email,
+        password=password,
+        mobile_number=mobile_number,
+        date_of_birth=date_of_birth,
+        doctor_speciality=doctor_speciality
+    )
+
 
 # Pydantic model for the JWT token response
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# Route to create a new user
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+@router.post("/create_user", status_code=status.HTTP_201_CREATED)
+async def create_user(
+    db: Session = Depends(get_db),
+    create_user_request: CreateUserRequest = Depends(create_user_form),
+    profile_picture: UploadFile = File(...)
+):
     # Check if user exists inside the database
-
     user_exists = db.query(Users).filter(
-    (Users.email == create_user_request.email) | 
-    (Users.mobile_number == create_user_request.mobile_number)).first()
+        (Users.email == create_user_request.email) | 
+        (Users.mobile_number == create_user_request.mobile_number)
+    ).first()
 
     if user_exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email address or mobile number is already registered")
 
+    # Check the file type 
+    if not profile_picture.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="The uploaded file is not an image")
+    
+    # Read image data
+    image_data = await profile_picture.read()
+
+    # Encode the image data as a Base64 string
+    base64_encoded_data = base64.b64encode(image_data)
+    base64_string = base64_encoded_data.decode('utf-8')
 
     # Create a new user model with hashed password
     create_user_model = Users(
         email=create_user_request.email,
-        mobile_number = create_user_request.mobile_number,
+        mobile_number=create_user_request.mobile_number,
         full_name=create_user_request.full_name,
         hashed_password=bcrypt_context.hash(create_user_request.password),
-        role=create_user_request.role,
+        profile_picture=base64_string,
+        date_of_birth=create_user_request.date_of_birth,
+        doctor_speciality=create_user_request.doctor_speciality,
         is_active=True
     )
 

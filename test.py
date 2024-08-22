@@ -1,10 +1,14 @@
-from datetime import datetime
+l1 = [9,9,9,9,9,9,9] 
+l2 = [9,9,7,8]
+output = []
 
-# Get the current date
-current_date = datetime.now()
 
-# Get the current time
-current_time = datetime.now().time()
 
-print("Current Date:", type(str(current_date)))
-print("Current Time:", type(current_time))
+
+def addNum(l1: list, l2: list):
+    # Check indices
+    if len(l1) != len(l2):
+        for index1, value1 in enumerate(l1):
+            print(value1)
+
+addNum(l1, l2=l2)

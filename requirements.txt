@@ -13,3 +13,5 @@ httpx
 pytest-asyncio
 aiofiles
 jinja2
+pillow
+aiofiles

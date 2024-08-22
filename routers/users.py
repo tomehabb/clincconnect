@@ -46,7 +46,18 @@ async def get_user_information(user: user_dependency, db: db_dependency):
     
     user_model = db.query(Users).filter(Users.id == user.get("id")).first()
 
-    return user_model
+    reutrn_message = {
+        "id": user_model.id,
+        "full_name": user_model.full_name,
+        "email": user_model.email,
+        "mobile_number": user_model.mobile_number,
+        "date_of_birth": user_model.date_of_birth,
+        "doctor_speciality": user_model.doctor_speciality,
+        "profile_picture": user_model.profile_picture,
+
+    }
+
+    return reutrn_message
 
 # API endpoint to change user's password
 @router.put("/change/password", status_code=status.HTTP_204_NO_CONTENT)
@@ -59,10 +70,9 @@ async def change_password(user: user_dependency, db: db_dependency, change_passw
     if user_model is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not found")
     
-    if change_password_request.new_password != change_password_request.repeated_password:
+    if change_password_request.old_password != change_password_request.repeated_password:
         raise HTTPException(status_code=400, detail="Password Doesn't match")
     
-    print(bcrypt_context.hash(change_password_request.old_password), user_model.hashed_password)
 
     if bcrypt_context.verify(change_password_request.old_password, user_model.hashed_password):
         user_model.hashed_password = bcrypt_context.hash(change_password_request.new_password)
