@@ -1,11 +1,12 @@
 import base64
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, Form, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Users
+from models import Users, ProfilePictures
 from passlib.context import CryptContext
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -66,20 +67,20 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 # Pydantic model for user creation request
 class CreateUserRequest(BaseModel):
-    full_name: str
-    email: str
-    password: str
-    mobile_number: str
-    date_of_birth: str
-    doctor_speciality: str
+    full_name: str 
+    email: str 
+    password: str 
+    mobile_number: str 
+    date_of_birth: str 
+    doctor_speciality: str 
 
     # Example schema for the user creation request
     model_config = {
         "json_schema_extra": {
             "example": {
                 "full_name": "Thomas Ehab",
-                "password": "xyz1234",
                 "email": "example@example.com",
+                "password": "xyz1234",
                 "mobile_number": "01012345678",
                 "date_of_birth": "10-05-2023",
                 "doctor_speciality": "dermatology"
@@ -87,22 +88,6 @@ class CreateUserRequest(BaseModel):
         }
     }
 
-def create_user_form(
-    full_name: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    mobile_number: str = Form(...),
-    date_of_birth: str = Form(...),
-    doctor_speciality: str = Form(...)
-) -> CreateUserRequest:
-    return CreateUserRequest(
-        full_name=full_name,
-        email=email,
-        password=password,
-        mobile_number=mobile_number,
-        date_of_birth=date_of_birth,
-        doctor_speciality=doctor_speciality
-    )
 
 
 # Pydantic model for the JWT token response
@@ -110,50 +95,31 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 @router.post("/create_user", status_code=status.HTTP_201_CREATED)
-async def create_user(
-    db: Session = Depends(get_db),
-    create_user_request: CreateUserRequest = Depends(create_user_form),
-    profile_picture: UploadFile = File(...)
-):
-    # Check if user exists inside the database
+async def create_user(db: db_dependency, user_request: CreateUserRequest):
+    # Check if user exists in the database
     user_exists = db.query(Users).filter(
-        (Users.email == create_user_request.email) | 
-        (Users.mobile_number == create_user_request.mobile_number)
+        (Users.email == user_request.email) |
+        (Users.mobile_number == user_request.mobile_number)
     ).first()
 
     if user_exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email address or mobile number is already registered")
 
-    # Check the file type 
-    if not profile_picture.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="The uploaded file is not an image")
-    
-    # Read image data
-    image_data = await profile_picture.read()
-
-    # Encode the image data as a Base64 string
-    base64_encoded_data = base64.b64encode(image_data)
-    base64_string = base64_encoded_data.decode('utf-8')
-
-    # Create a new user model with hashed password
     create_user_model = Users(
-        email=create_user_request.email,
-        mobile_number=create_user_request.mobile_number,
-        full_name=create_user_request.full_name,
-        hashed_password=bcrypt_context.hash(create_user_request.password),
-        profile_picture=base64_string,
-        date_of_birth=create_user_request.date_of_birth,
-        doctor_speciality=create_user_request.doctor_speciality,
-        is_active=True
+        email=user_request.email,
+        mobile_number=user_request.mobile_number,
+        full_name=user_request.full_name,
+        hashed_password=bcrypt_context.hash(user_request.password),
+        date_of_birth=user_request.date_of_birth,
+        doctor_speciality=user_request.doctor_speciality,
     )
-
-    # Add the user to the database and commit the transaction
     db.add(create_user_model)
     db.commit()
 
-    # Optionally return the created user or a success message
     return {"message": "User created successfully"}
+
 
 # Route to generate a JWT token for a user
 @router.post("/token", response_model=Token)

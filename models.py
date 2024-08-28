@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, BLOB
 from sqlalchemy.orm import relationship
 
 # Define the Users model, which maps to the 'users' table in the database
@@ -9,7 +9,7 @@ class Users(Base):
     # Define the columns in the 'users' table
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String)
-    profile_picture = Column(String)  # Field to store the profile picture URL or path
+    profile_picture = relationship("ProfilePictures", back_populates="user")  # Field to store the profile picture URL or path
     hashed_password = Column(String)
     email = Column(String, unique=True)
     mobile_number = Column(String, unique=True)
@@ -68,8 +68,14 @@ class ClinicPictures(Base):
     id = Column(Integer, primary_key=True, index=True)
     clinic_id = Column(Integer, ForeignKey('clinics.id'))
     image_url = Column(String)  # Or use Base64-encoded string if storing the image data directly
-    image_description = Column(String, nullable=True)
 
     clinic = relationship("Clinics", back_populates="pictures")
 
 
+class ProfilePictures(Base):
+    __tablename__ = "profile_pictures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    image_url = Column(String)  # Store the URL or file path to the image
+    user = relationship("Users", back_populates="profile_picture")
