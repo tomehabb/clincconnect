@@ -102,7 +102,7 @@ async def add_clinic(
     
     
     db.commit()
-    return {"status": "Clinic and pictures added successfully"}
+    return {"message": "Clinic created succesfully"}
 
 
 @router.get("/get_clinic_by_id/{clinic_id}", status_code=status.HTTP_200_OK)

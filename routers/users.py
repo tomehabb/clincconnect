@@ -41,8 +41,7 @@ class UpdateUserRequest(BaseModel):
     full_name: str
     email: str
     mobile_number: str
-    date_of_birth: str
-    doctor_speciality: str
+
 
     model_config = {
         "json_schema_extra": {
@@ -126,24 +125,27 @@ async def get_user_by_id(db: db_dependency, user:user_dependency, user_id: int):
     }
     return user_details
 
-@router.post("/update_user_information")
-async def update_user(db: db_dependency, user: user_dependency, update_request: UpdateUserRequest):
-    user_model = db.query(Users).filter(Users.id == user.get("id")).first()
+# @router.post("/update_user_information")
+# async def update_user(db: db_dependency, user: user_dependency, update_request: UpdateUserRequest):
+#     user_model = db.query(Users).filter(Users.id == user.get("id")).first()
 
-    user_model.full_name = update_request.full_name
-    user_model.email = update_request.email
-    user_model.mobile_number = update_request.mobile_number
+#     user_model.full_name = update_request.full_name
+#     user_model.email = update_request.email
+#     user_model.mobile_number = update_request.mobile_number
 
 
-    db.add(user_model)
-    db.commit
+#     db.add(user_model)
+#     db.commit
 
-    return {"message": "User data updated successfully."}
+#     return {"message": "User data updated successfully."}
 
 
 @router.delete("/user_delete")
 async def delete_user(db: db_dependency, user: user_dependency):
     user_model = db.query(Users).filter(Users.id == user.get("id")).first()
+
+    if user_model is None:
+        raise HTTPException(status_code=404, detail="User's data doesn't exist")
     db.delete(user_model)
     db.commit()
     return {"message": "user deleted succefully"}

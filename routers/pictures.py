@@ -75,6 +75,7 @@ async def upload_profile_picture(db: db_dependency, user: user_dependency, profi
         db.add(picture_model)
         db.commit()
     else:
+        os.remove(f"images/profile_pictures/{picture_model.image_url}")
         picture_model.user_id = user_model.id
         picture_model.image_url = unique_filename
         db.add(picture_model)
@@ -143,9 +144,16 @@ async def display_clinic_image(filename: str):
 @router.delete("/clinic_picture/{id}")
 async def delete_profile_picture(user: user_dependency,db: db_dependency, id: int):
     picture_model = db.query(ClinicPictures).filter(ClinicPictures.id == id).first()
+    clinic_model = db.query(Clinics).filter(Clinics.id == picture_model.clinic_id).first()
+
+    if clinic_model.owner_id != user.get("id"):
+        raise HTTPException(status_code=404, detail="You're not authorised to delete this picture")
 
     if picture_model is None:
         raise HTTPException(status_code=404, detail="Image not found")
+    
+    if picture_model.clinic_id != clinic_model.id:
+        raise HTTPException(status_code=404, detail="This picture is not associated with this clinic")
     
     db.delete(picture_model)
     db.commit()
