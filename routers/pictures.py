@@ -159,3 +159,21 @@ async def delete_profile_picture(user: user_dependency,db: db_dependency, id: in
     db.commit()
 
     return {"message": "Image deleted successfully"}
+
+@router.post("/test/doctor_id")
+async def upload_id_picture(db: db_dependency, user_id: UploadFile = File(...)):
+    # Check the file type
+    if not user_id.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="The uploaded file is not an image")
+    
+    file_extension = user_id.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+
+    directory = "images/users_ids"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    save_path = os.path.join(directory, unique_filename)
+    with open(save_path, "wb") as f:
+        f.write(await user_id.read())
+
