@@ -9,6 +9,7 @@ class Users(Base):
     # Define the columns in the 'users' table
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String)
+    gender = Column(String)
     profile_picture = relationship("ProfilePictures", back_populates="user")  # Field to store the profile picture URL or path
     hashed_password = Column(String)
     email = Column(String, unique=True)
@@ -20,6 +21,8 @@ class Users(Base):
 
     # Establish a relationship with the Clinics model
     clinics = relationship("Clinics", back_populates="owner")
+
+    syndicate_id = relationship("LegalInformation", back_populates="user_id")
 
 
 
@@ -66,7 +69,7 @@ class ClinicPictures(Base):
     __tablename__ = 'clinic_pictures'
 
     id = Column(Integer, primary_key=True, index=True)
-    clinic_id = Column(Integer, ForeignKey('clinics.id'))
+    owner_clinic_id = Column(Integer, ForeignKey('clinics.id'))
     image_url = Column(String)  # Or use Base64-encoded string if storing the image data directly
 
     clinic = relationship("Clinics", back_populates="pictures")
@@ -79,3 +82,15 @@ class ProfilePictures(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     image_url = Column(String)  # Store the URL or file path to the image
     user = relationship("Users", back_populates="profile_picture")
+
+
+class LegalInformation(Base):
+    __tablename__ = "legal_information"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner = Column(Integer, ForeignKey('users.id'))
+    arabic_full_name = Column(String)
+    syndicate_id = Column(String)
+    syndicate_id_url = Column(String)
+
+    user_id = relationship("Users", back_populates="syndicate_id")

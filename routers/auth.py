@@ -67,7 +67,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 # Pydantic model for user creation request
 class CreateUserRequest(BaseModel):
-    full_name: str 
+    full_name: str
+    gender: str
     email: str 
     password: str 
     mobile_number: str 
@@ -80,6 +81,7 @@ class CreateUserRequest(BaseModel):
             "example": {
                 "full_name": "Thomas Ehab",
                 "email": "example@example.com",
+                "gender": "male",
                 "password": "xyz1234",
                 "mobile_number": "01012345678",
                 "date_of_birth": "10-05-2023",
@@ -110,6 +112,7 @@ async def create_user(db: db_dependency, user_request: CreateUserRequest):
     create_user_model = Users(
         email=user_request.email,
         mobile_number=user_request.mobile_number,
+        gender = user_request.gender,
         full_name=user_request.full_name,
         hashed_password=bcrypt_context.hash(user_request.password),
         date_of_birth=user_request.date_of_birth,
